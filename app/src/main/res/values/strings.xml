@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Todos_SunWuChoi</string>
+    <string name="new_todo">New Todo</string>
+    <string name="title">Title:</string>
+    <string name="text">Text:</string>
+    <string name="titleBold">Title</string>
+    <string name="contents">Contents</string>
+    <string name="completed">Completed</string>
+    <string name="upload_image">UPLOAD IMAGE</string>
+    <string name="save">SAVE</string>
+    <string name="log_all_todos">Log All Todos</string>
 </resources>
