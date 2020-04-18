@@ -1,15 +1,26 @@
 package edu.towson.cosc435.choi.todos.models
 
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
+import java.util.*
+
+@Entity
 data class Todo (
-    val title: String,
-    val contents: String,
-    var isCompleted: Boolean,
-    //val Image: String,
-    val dateCreated: String,
-    val dueDate: String,
-    val id: Int
+    @ColumnInfo(name = "content")
+    var content: String,
+    @ColumnInfo(name = "completed")
+    var completed: Boolean,
+    @ColumnInfo(name = "title")
+    var title: String,
+    @ColumnInfo(name = "create_date")
+    var create_date: String,
+    @PrimaryKey
+    @ColumnInfo(name = "id")
+    var id: String
 ) {
     override fun toString(): String {
-        return String.format("New Todo Log\n"+"Title       : " + title + "\nContent     : " + contents + "\nis completed: " + isCompleted + "\nDate created: " + dateCreated)
+        return String.format("New Todo Log\n"+"Title       : " + title + "\nContent     : " + content + "\nis completed: " + completed + "\nDate created: " + create_date)
     }
 }

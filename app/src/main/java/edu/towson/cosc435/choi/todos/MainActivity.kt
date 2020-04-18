@@ -1,133 +1,150 @@
 package edu.towson.cosc435.choi.todos
 
 import android.app.Activity
-import android.util.Log
+import android.app.AlertDialog
 import android.content.Intent
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.core.view.get
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
-import edu.towson.cosc435.choi.todos.interfaces.IController
+import edu.towson.cosc435.choi.todos.database.TodoDatabaseRepository
+import edu.towson.cosc435.choi.todos.interfaces.ITodoRepository
+import edu.towson.cosc435.choi.todos.interfaces.ITodoController
 import edu.towson.cosc435.choi.todos.models.Todo
 import kotlinx.android.synthetic.main.activity_main.*
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.lang.Exception
+import kotlin.coroutines.CoroutineContext
 
-class MainActivity : AppCompatActivity(), IController{
+class MainActivity : AppCompatActivity(), ITodoController {
+    override val coroutineContext: CoroutineContext
+        get() = lifecycleScope.coroutineContext
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    override suspend fun toggleCompleted(pos: Int) {
+        val todo = todosRepo.GetTodo(pos)
+        val newTodo = todo.copy(completed = !todo.completed)
+        try {
+            withContext(Dispatchers.IO) {
+                todosRepo.UpdateTodo(pos, newTodo)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error: ${e.message}")
+            Toast.makeText(this, "Failed to update song", Toast.LENGTH_SHORT).show()
+            throw e
+        }
+    }
 
-    var todos: MutableList<Todo> = (1..10).map { Todo("Title" + it, "content number" + it,false,LocalDateTime.now().format(
-        DateTimeFormatter.ofPattern("M/d/y H:m:ss")),"3/23/2020", it) }.toMutableList()
+    override fun editTodo(pos: Int) {
+        val todo = todosRepo.GetTodo(pos)
+        val intent = Intent(this, NewTodoActivity::class.java)
+        intent.putExtra(NewTodoActivity.TODO, Gson().toJson(todo))
+        startActivityForResult(intent, REQUEST_CODE)
+    }
 
-    val adapter = ListAdapter(todos, this)
+    override suspend fun deleteTodo(pos: Int) {
+        val current = todosRepo.GetTodo(pos)
+            try {
+                withContext(Dispatchers.IO) {
+                    todosRepo.DeleteTodo(current)
+                }
+            } catch (e: Exception){
+                Log.e(TAG, "Error ${e.message}")
+                Toast.makeText(this, "Failed to delete song", Toast.LENGTH_SHORT).show()
+                throw e
+            }
+    }
+
+    override lateinit var todosRepo: ITodoRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        addTodoAbtn.setOnClickListener {
-            launchNewTodoActivity()
-        }
+        todosRepo = TodoDatabaseRepository(this)
 
-        recyclerView.layoutManager = GridLayoutManager(this, 1)
-
-        recyclerView.adapter = adapter
-
-        val callbacks = ItemTouchHelperCallback(adapter)
-        val touchHelper = ItemTouchHelper(callbacks)
-        touchHelper.attachToRecyclerView(recyclerView)
+        add_todo_btn.setOnClickListener { launchNewTodoActivity() }
+        recyclerView.adapter = TodoAdapter(this)
+        recyclerView.layoutManager = LinearLayoutManager(this)
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            update()
+        }
+    }
+
+    private fun launchNewTodoActivity() {
+        val intent = Intent(this, NewTodoActivity::class.java)
+        startActivityForResult(intent,
+            REQUEST_CODE
+        )
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        when(resultCode){
-            Activity.RESULT_OK -> {
-                when(requestCode){
-                    NEW_TODO_REQUEST_CODE -> {
-                        val json: String? = data?.getStringExtra(NewTodoActivity.TODO_EXTRA_KEY)
-                        if(json != null){
-                            val todo = Gson().fromJson<Todo>(json, Todo::class.java)
-                            //Log.v("New Todo",todo.toString())
-                            todos?.add(todo)
-                            //logAllTodo(todos)
-                            adapter.notifyDataSetChanged()
+        when(requestCode) {
+            REQUEST_CODE -> {
+                when(resultCode) {
+                    Activity.RESULT_OK -> {
+                        val todo = Gson().fromJson<Todo>(data?.getStringExtra(NewTodoActivity.TODO), Todo::class.java)
+                        lifecycleScope.launch {
+                            addNewTodo(todo)
+                            update()
                         }
-
                     }
-                    EDIT_TODO_REQUEST_CODE -> {
-                        val json: String? = data?.getStringExtra(NewTodoActivity.TODO_EXTRA_KEY)
-                        if(json != null){
-                            val todo = Gson().fromJson<Todo>(json, Todo::class.java)
-                            //Log.v("New Todo",todo.toString())
-
-                            var pos = 0
-                            for( i in todos){
-                                if(i.id == todo.id){
-                                    break
+                    1 -> {
+                        val todo = Gson().fromJson<Todo>(data?.getStringExtra(NewTodoActivity.TODO), Todo::class.java)
+                        lifecycleScope.launch {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    todosRepo.UpdateTodo(0, todo)
                                 }
-                                pos++
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error: ${e.message}")
+                                Toast.makeText(this@MainActivity, "Failed to update song", Toast.LENGTH_SHORT).show()
+                                throw e
                             }
-
-
-                            todos?.removeAt(pos)
-                            todos?.add(pos,todo)
-                            //logAllTodo(todos)
-                            adapter.notifyDataSetChanged()
                         }
                     }
                 }
             }
-            Activity.RESULT_CANCELED -> {
-                Toast.makeText(this,"User canceled. No Todo added",Toast.LENGTH_SHORT).show()
+        }
+    }
+    override suspend fun addNewTodo(todo: Todo) {
+        try{
+            withContext(Dispatchers.IO){
+                todosRepo.AddTodo(todo)
             }
+        } catch (e : Exception){
+            Log.e(TAG, "Error: ${e.message}")
+            Toast.makeText(this, "Failed to add new todo", Toast.LENGTH_SHORT).show()
+            throw e
         }
     }
 
-
-    fun launchNewTodoActivity() {
-        val intent = Intent(this, NewTodoActivity::class.java)
-        //System.out.println(todos.lastIndex)
-        var id = 0
-        if(!todos.isEmpty()){
-            id = todos.last().id
-        }
-        intent.putExtra(ID_CODE,id)
-        startActivityForResult(intent, NEW_TODO_REQUEST_CODE)
-    }
-
-    fun logAllTodo(list: MutableList<Todo>?){
-        if (list != null) {
-            for(item in list){
-                Log.v("New Todo",item.toString())
+    override suspend fun update(){
+        try{
+            withContext(Dispatchers.IO){
+                todosRepo.GetTodos()
             }
+        } catch (e : Exception){
+            Log.e(TAG, "Error: ${e.message}")
+            Toast.makeText(this, "Failed to get list", Toast.LENGTH_SHORT).show()
+            throw e
         }
-    }
-
-    override fun updateTodo(idx: Int) {
-        val todo = todos?.get(idx)
-        if(todo != null){
-            todos?.set(idx, todo.copy(todo.title.toUpperCase()))
-        }
-        adapter.notifyItemChanged(idx)
-    }
-
-    override fun removeTodo(idx: Int) {
-        todos?.removeAt(idx)
-        adapter.notifyItemChanged(idx)
+        recyclerView.adapter?.notifyDataSetChanged()
     }
 
 
     companion object {
-        val NEW_TODO_REQUEST_CODE = 1
-        val EDIT_TODO_REQUEST_CODE = 2
-        val ID_CODE = "ID"
+        val REQUEST_CODE = 1
+        val TAG = MainActivity::class.java.simpleName
     }
 }

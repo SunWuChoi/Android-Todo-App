@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:id="@+id/todo_item_container"
+    android:padding="10dp"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.8"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/todo_title"
+            android:textSize="24sp"
+            android:background="?attr/selectableItemBackground"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:transitionName="title"
+            tools:text="A title" />
+
+        <TextView
+            android:clickable="false"
+            android:id="@+id/todo_text"
+            android:textSize="14sp"
+            android:lines="3"
+            android:background="?attr/selectableItemBackground"
+            android:layout_width="match_parent"
+            android:layout_height="36sp"
+            android:transitionName="contents"
+            tools:text="some text" />
+
+        <TextView
+            android:clickable="false"
+            android:id="@+id/todo_create_date"
+            android:textSize="10sp"
+            android:background="?attr/selectableItemBackground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="some text" />
+
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="0dp"
+        android:transitionName="checkbox"
+        android:layout_height="match_parent"
+        android:layout_weight="0.2" />
+
+</LinearLayout>
