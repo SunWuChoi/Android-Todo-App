@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import edu.towson.cosc435.choi.todos.models.Todo
 import kotlinx.android.synthetic.main.activity_new_todo.*
 import java.util.*
+import kotlin.random.Random
 
 class NewTodoActivity : AppCompatActivity() {
     lateinit var todo: Todo
@@ -24,7 +25,8 @@ class NewTodoActivity : AppCompatActivity() {
                 title = title_edit_text.editableText.toString(),
                 completed = newtodo_completed_checkbox.isChecked,
                 id = UUID.randomUUID().toString(),
-                create_date = Date().toString()
+                create_date = Date().toString(),
+                iconUrl = "https://api.adorable.io/avatars/".plus((1..20).shuffled().first())
             )
         } else {
             return Todo(
@@ -32,7 +34,8 @@ class NewTodoActivity : AppCompatActivity() {
                 title = title_edit_text.editableText.toString(),
                 completed = newtodo_completed_checkbox.isChecked,
                 id = todo.id,
-                create_date = todo.create_date
+                create_date = todo.create_date,
+                iconUrl = todo.iconUrl
             )
         }
     }
@@ -43,7 +46,8 @@ class NewTodoActivity : AppCompatActivity() {
             title = title_edit_text.editableText.toString(),
             completed = newtodo_completed_checkbox.isChecked,
             id = "",
-            create_date = ""
+            create_date = "",
+            iconUrl = ""
         )
     }
 

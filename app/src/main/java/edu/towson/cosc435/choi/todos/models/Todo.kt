@@ -18,7 +18,9 @@ data class Todo (
     var create_date: String,
     @PrimaryKey
     @ColumnInfo(name = "id")
-    var id: String
+    var id: String,
+    @ColumnInfo(name = "icon_url")
+    val iconUrl: String
 ) {
     override fun toString(): String {
         return String.format("New Todo Log\n"+"Title       : " + title + "\nContent     : " + content + "\nis completed: " + completed + "\nDate created: " + create_date)

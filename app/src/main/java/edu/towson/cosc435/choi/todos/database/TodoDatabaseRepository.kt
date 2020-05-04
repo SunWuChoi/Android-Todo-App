@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import edu.towson.cosc435.choi.todos.interfaces.ITodoRepository
 import edu.towson.cosc435.choi.todos.models.Todo
+import edu.towson.cosc435.choi.todos.network.TodoApi
 import kotlinx.coroutines.delay
 import java.lang.Exception
 
@@ -17,7 +18,6 @@ class TodoDatabaseRepository(ctx: Context) : ITodoRepository {
 
     override fun GetTodos(): List<Todo> {
         if(todoList.size == 0){
-            System.out.println("tjsdn 0")
             refreshTodoList()
         }
         return todoList
@@ -49,7 +49,7 @@ class TodoDatabaseRepository(ctx: Context) : ITodoRepository {
         return todoList.size
     }
 
-    private fun refreshTodoList() {
+    fun refreshTodoList() {
         todoList.clear()
         val todos = db.todoDao().getAllTodos()
         todoList.addAll(todos)

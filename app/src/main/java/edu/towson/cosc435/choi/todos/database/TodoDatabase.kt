@@ -15,7 +15,7 @@ interface TodoDao {
     @Delete
     fun deleteTodo(todo: Todo)
 
-    @Query("select content, completed, title, create_date, id from Todo")
+    @Query("select content, completed, title, create_date, id, icon_url from Todo")
     fun getAllTodos() : List<Todo>
 }
 
@@ -31,7 +31,7 @@ class UUIDConverter {
     }
 }
 
-@Database(entities = arrayOf(Todo::class), version = 1, exportSchema = false)
+@Database(entities = arrayOf(Todo::class), version = 2, exportSchema = false)
 @TypeConverters(UUIDConverter::class)
 abstract class TodoDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao

@@ -10,6 +10,7 @@ import edu.towson.cosc435.choi.todos.interfaces.ITodoController
 import edu.towson.cosc435.choi.todos.models.Todo
 
 import kotlinx.android.synthetic.main.todo_listitem_layout.view.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.lang.Exception
 
@@ -64,10 +65,24 @@ class TodoAdapter(val controller: ITodoController) : RecyclerView.Adapter<TodoVi
         val todo = controller.todosRepo.GetTodo(position)
         val tv = holder.itemView.todo_title
         updateStrikethrough(todo, tv)
+
         holder.itemView.todo_title.text = todo.title
         holder.itemView.todo_text.text = todo.content
         holder.itemView.checkbox.isChecked = todo.completed
-        holder.itemView.todo_create_date.text = todo.create_date.toString()
+        holder.itemView.todo_create_date.text = todo.create_date
+
+        holder.itemView.iconProgress.visibility = View.VISIBLE
+        holder.itemView.songIconImage.visibility = View.INVISIBLE
+
+        controller.launch(Dispatchers.Main ) {
+            val bitmap = controller.checkCache(todo.iconUrl.drop(32).plus(".jpg"))
+            if(bitmap != null) {
+                holder.itemView.songIconImage.setImageBitmap(bitmap)
+                holder.itemView.iconProgress.visibility = View.INVISIBLE
+                holder.itemView.songIconImage.visibility = View.VISIBLE
+            }
+        }
+
     }
 
     private fun updateStrikethrough(todo: Todo, tv: TextView) {
